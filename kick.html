@@ -5,21 +5,21 @@
  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:-apple-system,Segoe UI,Roboto,sans-serif}
  html,body{margin:0;height:100%;background:#05060d;overflow:hidden;color:#fff;touch-action:none;user-select:none}
  #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#05060d}
- #stage{position:relative;height:100%;aspect-ratio:780/1380;max-width:100%;max-height:100%}
+ #stage{position:relative;height:100%;aspect-ratio:780/1380;max-width:100%;max-height:100%;container-type:inline-size}
  canvas{display:block;width:100%;height:100%;background:#06101f;touch-action:none}
  .panel{position:absolute;z-index:6;pointer-events:auto}
  /* CURVE control — right edge */
- #curve{right:2.5%;top:46%;transform:translateY(-50%);width:13vw;max-width:78px;background:rgba(7,16,32,.78);border:1px solid #2c5278;border-radius:12px;padding:6px 4px;text-align:center;backdrop-filter:blur(6px)}
- #curve .lab{font-size:2vw;color:#7fd0ff;letter-spacing:.12em}
- #curve .val{font-size:4.4vw;font-weight:800;margin:4px 0;color:#ffd23d}
- #curve .row{display:flex;gap:6px;justify-content:center}
- #curve button{flex:1;font-size:4.2vw;font-weight:800;color:#cfe9ff;background:#10243b;border:1px solid #2c5278;border-radius:8px;padding:2px 0}
+ #curve{right:3%;top:44%;transform:translateY(-50%);width:21cqw;background:rgba(7,16,32,.8);border:1px solid #2c5278;border-radius:3cqw;padding:2cqw 1cqw;text-align:center;backdrop-filter:blur(6px)}
+ #curve .lab{font-size:2.7cqw;color:#7fd0ff;letter-spacing:.1em}
+ #curve .val{font-size:6.5cqw;font-weight:800;margin:1cqw 0;color:#ffd23d}
+ #curve .row{display:flex;gap:1.5cqw;justify-content:center}
+ #curve button{flex:1;font-size:6cqw;font-weight:800;color:#cfe9ff;background:#10243b;border:1px solid #2c5278;border-radius:2cqw;padding:1cqw 0}
  /* LEVEL chips — bottom-left */
- #level{left:3%;bottom:12%;display:flex;flex-direction:column;gap:6px}
- #level button{font-size:2.7vw;font-weight:800;letter-spacing:.05em;color:#cfe9ff;background:rgba(7,16,32,.78);border:1px solid #2c5278;border-radius:10px;padding:6px 10px;min-width:17vw}
+ #level{left:3.5%;bottom:13%;display:flex;flex-direction:column;gap:1.6cqw}
+ #level button{font-size:3.8cqw;font-weight:800;letter-spacing:.04em;color:#cfe9ff;background:rgba(7,16,32,.8);border:1px solid #2c5278;border-radius:2.5cqw;padding:2cqw 3.5cqw;min-width:24cqw}
  #level button.on{background:#1f6feb;border-color:#7fd0ff;color:#fff;box-shadow:0 0 16px #1f6feb}
- #shoot{left:50%;bottom:4.5%;transform:translateX(-50%);font-size:3.4vw;font-weight:800;color:#ffe98a;text-shadow:0 2px 8px #000;z-index:6;pointer-events:none;text-align:center}
- #kmode{position:absolute;top:3%;right:3%;z-index:6;font-size:2.8vw;color:#9fc4e6;background:rgba(7,16,32,.7);border:1px solid #2c5278;border-radius:10px;padding:6px 10px}
+ #shoot{left:50%;bottom:4.5%;transform:translateX(-50%);font-size:3.4cqw;font-weight:800;color:#ffe98a;text-shadow:0 2px 8px #000;z-index:6;pointer-events:none;text-align:center}
+ #kmode{position:absolute;top:2.5%;right:3%;z-index:6;font-size:3.2cqw;color:#9fc4e6;background:rgba(7,16,32,.7);border:1px solid #2c5278;border-radius:2.5cqw;padding:1.5cqw 2.5cqw}
 </style></head>
 <body>
 <div id="wrap"><div id="stage"><canvas id="cv" width="780" height="1380"></canvas>
