@@ -9,13 +9,13 @@
  canvas{display:block;width:100%;height:100%;background:#06101f;touch-action:none}
  .panel{position:absolute;z-index:6;pointer-events:auto}
  /* CURVE control — right edge */
- #curve{right:3%;top:44%;transform:translateY(-50%);width:21cqw;background:rgba(7,16,32,.8);border:1px solid #2c5278;border-radius:3cqw;padding:2cqw 1cqw;text-align:center;backdrop-filter:blur(6px)}
+ #curve{right:3%;bottom:34%;width:21cqw;background:rgba(7,16,32,.8);border:1px solid #2c5278;border-radius:3cqw;padding:2cqw 1cqw;text-align:center;backdrop-filter:blur(6px)}
  #curve .lab{font-size:2.7cqw;color:#7fd0ff;letter-spacing:.1em}
  #curve .val{font-size:6.5cqw;font-weight:800;margin:1cqw 0;color:#ffd23d}
  #curve .row{display:flex;gap:1.5cqw;justify-content:center}
  #curve button{flex:1;font-size:6cqw;font-weight:800;color:#cfe9ff;background:#10243b;border:1px solid #2c5278;border-radius:2cqw;padding:1cqw 0}
  /* LEVEL chips — bottom-left */
- #level{left:3.5%;bottom:13%;display:flex;flex-direction:column;gap:1.6cqw}
+ #level{right:3%;bottom:13%;display:flex;flex-direction:column;gap:1.6cqw}
  #level button{font-size:3.8cqw;font-weight:800;letter-spacing:.04em;color:#cfe9ff;background:rgba(7,16,32,.8);border:1px solid #2c5278;border-radius:2.5cqw;padding:2cqw 3.5cqw;min-width:24cqw}
  #level button.on{background:#1f6feb;border-color:#7fd0ff;color:#fff;box-shadow:0 0 16px #1f6feb}
  #shoot{left:50%;bottom:4.5%;transform:translateX(-50%);font-size:3.4cqw;font-weight:800;color:#ffe98a;text-shadow:0 2px 8px #000;z-index:6;pointer-events:none;text-align:center}
@@ -27,7 +27,7 @@
   <div class="row"><button id="cl">&#9664;</button><button id="cr">&#9654;</button></div></div>
 <div class="panel" id="level">
   <button data-l="2">HIGH</button><button data-l="1" class="on">MID</button><button data-l="0">LOW</button></div>
-<div id="shoot">HOLD the pitch to charge &mdash; release to STRIKE</div>
+<div id="shoot">HOLD &mdash; power swings, release to STRIKE</div>
 <div id="kmode" data-k="0">KEEPER: AGILE</div>
 </div></div>
 <script>
@@ -64,7 +64,7 @@ function evaluate(sh){
   // wall: find u where y≈YWALL
   let uW=0; for(let u=0;u<=1;u+=0.02){ if(trajPoint(u,sh).y<=YWALL){uW=u;break;} }
   const xW=trajPoint(uW,sh).x;
-  if(sh.level<2 && xW>WALLL && xW<WALLR){ if(sh.power>0.85){S.smash=xW;} else { S.defJump=true; S.defX=xW; return "BLOCKED"; } }
+  if(sh.level<2 && xW>WALLL && xW<WALLR){ S.defJump=true; S.defX=xW; return "BLOCKED"; }
   if(Math.abs(sh.ax-GLX)<16||Math.abs(sh.ax-GRX)<16) return "POST";
   // keeper guesses a side, dives; reach by type, harder on a far high corner
   const side=(Math.random()<0.5?-1:1); const guess=GCX+side*Math.random()*GW*0.42;
@@ -92,7 +92,7 @@ function release(){ S.charging=false; rumble(false);
 /* ---------- loop ---------- */
 let last=performance.now();
 function frame(now){ const dt=Math.min(.05,(now-last)/1000); last=now;
-  if(S.charging) S.power=Math.min(1,(now-S.t0)/1300);
+  if(S.charging){ S.power=0.5-0.5*Math.cos((now-S.t0)/300); }
   if(S.shake>0)S.shake=Math.max(0,S.shake-dt*42); if(S.flash>0)S.flash=Math.max(0,S.flash-dt*2.2); if(S.netR>0)S.netR=Math.max(0,S.netR-dt*2.2);
   if(S.phase==="flight"){ const b=S.ball; b.u+=dt/b.T; const u=Math.min(1,b.u);
     const K=KEEPERS[S.kIdx]; const tgt=(S.result==="SAVE"||S.result==="GOAL")?(S.kTarget||GCX):GCX;
