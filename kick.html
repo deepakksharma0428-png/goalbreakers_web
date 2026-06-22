@@ -1,0 +1,87 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Goalbreakers — The Kick</title>
+<style>
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ html,body{margin:0;height:100%;background:#05060d;overflow:hidden;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#fff;touch-action:none;user-select:none}
+ #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#05060d}
+ video,#poster{position:absolute;width:100%;height:100%;object-fit:cover}
+ .hud{position:absolute;left:0;right:0;text-align:center;pointer-events:none;z-index:5}
+ #title{top:5%;font-weight:800;font-size:6vw;letter-spacing:.04em;text-shadow:0 2px 12px #000}
+ #title small{display:block;font-weight:600;font-size:3.2vw;color:#7fd0ff;letter-spacing:.2em;margin-top:.4em}
+ #dir{position:absolute;bottom:23%;left:0;right:0;display:flex;gap:5vw;justify-content:center;z-index:6}
+ .db{width:15vw;height:15vw;max-width:78px;max-height:78px;border-radius:50%;border:2px solid #2c5278;background:rgba(8,18,34,.6);color:#cfe9ff;font-size:7vw;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+ .db.on{background:#1f6feb;border-color:#7fd0ff;box-shadow:0 0 22px #1f6feb}
+ #charge{position:absolute;bottom:9%;left:12%;right:12%;height:22px;border-radius:12px;background:rgba(8,18,34,.7);border:1px solid #2c5278;overflow:hidden;z-index:6}
+ #fill{height:100%;width:0;background:linear-gradient(90deg,#36e0ff,#ffd23d);box-shadow:0 0 18px #36e0ff}
+ #hint{bottom:5%;font-weight:700;font-size:3.6vw;color:#ffe98a;text-shadow:0 2px 8px #000}
+ #flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:8;pointer-events:none}
+ #result{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;z-index:9;background:rgba(3,6,15,.35)}
+ #result b{font-size:13vw;font-weight:900;color:#ffd23d;text-shadow:0 4px 20px #000,0 0 30px #ffb800}
+ #result span{margin-top:1.5vh;font-size:4vw;color:#dff3ff;font-weight:700}
+ #energy{position:absolute;inset:0;z-index:4;pointer-events:none}
+</style></head>
+<body>
+<div id="stage">
+  <img id="poster" alt="">
+  <video id="vid" playsinline preload="auto"></video>
+  <div id="energy"></div>
+  <div id="flash"></div>
+  <div class="hud" id="title">GOALBREAKERS<small>HOLD TO CHARGE &middot; PICK A CORNER</small></div>
+  <div id="dir">
+    <div class="db" data-d="left">&#9664;</div>
+    <div class="db on" data-d="center">&#9650;</div>
+    <div class="db" data-d="right">&#9654;</div>
+  </div>
+  <div id="charge"><div id="fill"></div></div>
+  <div class="hud" id="hint">HOLD anywhere to charge &mdash; release to STRIKE</div>
+  <div id="result"><b id="rbig">GOAL!</b><span id="rsub">tap to shoot again</span></div>
+</div>
+<script>
+ const CLIPS={ left:"clips/kick_center.mp4", center:"clips/kick_center.mp4", right:"clips/kick_center.mp4" };
+ const POSTER_T=0.04;
+ const vid=document.getElementById('vid'), poster=document.getElementById('poster');
+ const fill=document.getElementById('fill'), energy=document.getElementById('energy');
+ const result=document.getElementById('result'), flash=document.getElementById('flash');
+ const hint=document.getElementById('hint'), title=document.getElementById('title'), dirRow=document.getElementById('dir');
+ let dir="center", phase="idle", charge=0, raf=0;
+ function loadPoster(){ const t=document.createElement('video'); t.src=CLIPS[dir]; t.muted=true; t.playsInline=true;
+   t.addEventListener('loadeddata',()=>{ t.currentTime=POSTER_T; });
+   t.addEventListener('seeked',()=>{ try{const c=document.createElement('canvas'); c.width=t.videoWidth;c.height=t.videoHeight;
+     c.getContext('2d').drawImage(t,0,0); poster.src=c.toDataURL('image/jpeg',0.9);}catch(e){} }); }
+ loadPoster();
+ document.querySelectorAll('.db').forEach(b=>b.addEventListener('pointerdown',e=>{e.stopPropagation();
+   document.querySelectorAll('.db').forEach(x=>x.classList.remove('on')); b.classList.add('on'); dir=b.dataset.d; loadPoster(); }));
+ const stage=document.getElementById('stage');
+ stage.addEventListener('pointerdown',e=>{ if(phase==='result'){reset();return;} if(phase!=='idle')return; ensureAudio(); startCharge(); });
+ window.addEventListener('pointerup',()=>{ if(phase==='charging') release(); });
+ function startCharge(){ phase='charging'; charge=0; rumble(true); const t0=performance.now();
+   (function loop(t){ if(phase!=='charging')return; charge=Math.min(1,(t-t0)/1400); fill.style.width=(charge*100)+'%';
+     energy.style.background='radial-gradient(circle at 50% 86%, rgba(54,224,255,'+(charge*0.5)+'), rgba(120,40,255,'+(charge*0.2)+') 40%, rgba(0,0,0,0) 62%)';
+     raf=requestAnimationFrame(loop); })(performance.now()); }
+ function release(){ phase='flight'; rumble(false); cancelAnimationFrame(raf); const power=charge;
+   energy.style.background='none'; fill.style.width='0';
+   title.style.display='none'; dirRow.style.display='none'; document.getElementById('charge').style.display='none'; hint.style.display='none';
+   flash.style.transition='none'; flash.style.opacity=Math.min(.85,.4+power*.5); requestAnimationFrame(()=>{flash.style.transition='opacity .35s'; flash.style.opacity=0;});
+   whoosh(power); poster.style.display='none';
+   vid.src=CLIPS[dir]; vid.currentTime=0; vid.muted=false; vid.play().catch(()=>{vid.muted=true;vid.play();});
+   setTimeout(()=>impact(power),700); setTimeout(()=>crowd(),1500);
+   vid.onended=()=>showResult(power); }
+ function showResult(power){ phase='result';
+   const r = power>0.55 ? "GOAL!" : (power>0.3? "SAVED!" : "TOO SOFT!");
+   document.getElementById('rbig').textContent=r; document.getElementById('rbig').style.color = r==="GOAL!"?"#ffd23d":"#ff7a7a";
+   document.getElementById('rsub').textContent="corner: "+dir+" · tap to shoot again";
+   result.style.display='flex'; if(r==="GOAL!") whistle(); }
+ function reset(){ phase='idle'; result.style.display='none'; vid.pause(); vid.removeAttribute('src'); vid.load();
+   poster.style.display='block'; title.style.display='block'; dirRow.style.display='flex';
+   document.getElementById('charge').style.display='block'; hint.style.display='block'; fill.style.width='0'; loadPoster(); }
+ let A=null,master,rumbleNode=null;
+ function ensureAudio(){ if(!A){ A=new(window.AudioContext||window.webkitAudioContext)(); master=A.createGain(); master.gain.value=.6; master.connect(A.destination);} if(A.state==='suspended')A.resume(); }
+ function noise(d){const b=A.createBuffer(1,A.sampleRate*d,A.sampleRate),x=b.getChannelData(0);for(let i=0;i<x.length;i++)x[i]=Math.random()*2-1;const s=A.createBufferSource();s.buffer=b;return s;}
+ function rumble(on){ if(!A)return; if(on){ rumbleNode=A.createOscillator(); const g=A.createGain(); rumbleNode._g=g; rumbleNode.type='sawtooth'; rumbleNode.frequency.setValueAtTime(40,A.currentTime); rumbleNode.frequency.linearRampToValueAtTime(120,A.currentTime+1.4); g.gain.setValueAtTime(0.0001,A.currentTime); g.gain.linearRampToValueAtTime(0.25,A.currentTime+1.4); rumbleNode.connect(g); g.connect(master); rumbleNode.start(); }
+   else if(rumbleNode){ try{rumbleNode._g.gain.exponentialRampToValueAtTime(0.001,A.currentTime+0.12); rumbleNode.stop(A.currentTime+0.15);}catch(e){} rumbleNode=null; } }
+ function whoosh(p){ if(!A)return;const t=A.currentTime;const s=noise(0.35),bp=A.createBiquadFilter();bp.type='bandpass';bp.frequency.setValueAtTime(400,t);bp.frequency.exponentialRampToValueAtTime(3500,t+0.3);const g=A.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(0.4+p*0.3,t+0.05);g.gain.exponentialRampToValueAtTime(0.001,t+0.35);s.connect(bp);bp.connect(g);g.connect(master);s.start(t);s.stop(t+0.35); }
+ function impact(p){ if(!A)return;const t=A.currentTime;const o=A.createOscillator(),g=A.createGain();o.type='sine';o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(50,t+0.18);g.gain.setValueAtTime(0.6+p*0.3,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.25);o.connect(g);g.connect(master);o.start(t);o.stop(t+0.27);const s=noise(0.12),hp=A.createBiquadFilter();hp.type='highpass';hp.frequency.value=1800;const g2=A.createGain();g2.gain.setValueAtTime(0.3,t);g2.gain.exponentialRampToValueAtTime(0.001,t+0.12);s.connect(hp);hp.connect(g2);g2.connect(master);s.start(t);s.stop(t+0.12); }
+ function crowd(){ if(!A)return;const t=A.currentTime;const s=noise(1.6),bp=A.createBiquadFilter();bp.type='bandpass';bp.frequency.value=800;bp.Q.value=0.6;const g=A.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(0.22,t+0.4);g.gain.exponentialRampToValueAtTime(0.001,t+1.6);s.connect(bp);bp.connect(g);g.connect(master);s.start(t);s.stop(t+1.6); }
+ function whistle(){ if(!A)return;const t=A.currentTime;for(let k=0;k<3;k++){const ts=t+k*0.16,o=A.createOscillator(),g=A.createGain();o.type='triangle';o.frequency.setValueAtTime(2300,ts);const lf=A.createOscillator(),lg=A.createGain();lf.frequency.value=30;lg.gain.value=130;lf.connect(lg);lg.connect(o.frequency);lf.start(ts);lf.stop(ts+0.13);g.gain.setValueAtTime(0.0001,ts);g.gain.exponentialRampToValueAtTime(0.3,ts+0.01);g.gain.exponentialRampToValueAtTime(0.001,ts+0.14);o.connect(g);g.connect(master);o.start(ts);o.stop(ts+0.15);} }
+</script></body></html>
