@@ -34,7 +34,7 @@
 const W=780,H=1380, cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 const GLX=180,GRX=600,GTY=840,GY=1000, GCX=(GLX+GRX)/2, GW=GRX-GLX;
 const BX0=390,BY0=1340, YWALL=1135, WALLL=300, WALLR=480;
-const KEEPERS=[{n:"AGILE",reach:0.30,spd:1.2,dmg:1.0},{n:"STRONG",reach:0.24,spd:0.95,dmg:0.55},{n:"WALL",reach:0.27,spd:1.05,dmg:0.8}];
+const KEEPERS=[{n:"AGILE",reach:0.22,spd:1.2,dmg:1.0},{n:"STRONG",reach:0.18,spd:0.95,dmg:0.55},{n:"WALL",reach:0.20,spd:1.05,dmg:0.8}];
 const IMG={}, NEED=["stadium_bg2","keeper_ready","keeper_dive_l","keeper_dive_r","defender_block","striker_stance","striker_kickR","ball_plain"];
 let loaded=0,ready=false; NEED.forEach(n=>{const i=new Image();i.onload=i.onerror=()=>{if(++loaded===NEED.length)ready=true;};i.src=(n==="stadium_bg2"?"sprites/":"sprites_t/")+n+".png";IMG[n]=i;});
 let S={deg:0, level:1, kIdx:0, power:0, phase:"aim", charging:false, t0:0, strike:1, shots:[],
@@ -64,7 +64,7 @@ function evaluate(sh){
   // wall: find u where y≈YWALL
   let uW=0; for(let u=0;u<=1;u+=0.02){ if(trajPoint(u,sh).y<=YWALL){uW=u;break;} }
   const xW=trajPoint(uW,sh).x;
-  if(sh.level<2 && xW>WALLL && xW<WALLR){ S.defJump=true; S.defX=xW; return "BLOCKED"; }
+  if(sh.level<2 && xW>WALLL && xW<WALLR){ if(sh.power>0.85){S.smash=xW;} else { S.defJump=true; S.defX=xW; return "BLOCKED"; } }
   if(Math.abs(sh.ax-GLX)<16||Math.abs(sh.ax-GRX)<16) return "POST";
   // keeper guesses a side, dives; reach by type, harder on a far high corner
   const side=(Math.random()<0.5?-1:1); const guess=GCX+side*Math.random()*GW*0.42;
@@ -75,12 +75,12 @@ function evaluate(sh){
 }
 
 /* ---------- controls ---------- */
-document.getElementById('cl').onclick=()=>{S.deg=Math.max(-20,S.deg-5);upd();};
-document.getElementById('cr').onclick=()=>{S.deg=Math.min(20,S.deg+5);upd();};
+document.getElementById('cl').onclick=()=>{S.deg=Math.max(-15,S.deg-1);upd();};
+document.getElementById('cr').onclick=()=>{S.deg=Math.min(15,S.deg+1);upd();};
 document.querySelectorAll('#level button').forEach(b=>b.onclick=()=>{ if(S.phase!=="aim")return;
   document.querySelectorAll('#level button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); S.level=+b.dataset.l; });
 document.getElementById('kmode').onclick=()=>{S.kIdx=(S.kIdx+1)%3; document.getElementById('kmode').textContent="KEEPER: "+KEEPERS[S.kIdx].n;};
-function upd(){ document.getElementById('degv').innerHTML=(S.deg>0?"+":"")+S.deg+"&deg;"; }
+function upd(){ const d=S.deg; document.getElementById('degv').innerHTML = d<-1?"&#9664;&#9664;":(d<0?"&#9664;":(d>1?"&#9654;&#9654;":(d>0?"&#9654;":"&#8226;"))); }
 upd();
 cv.addEventListener('pointerdown',e=>{ ensureAudio(); if(S.phase==="result"){reset();return;} if(S.phase==="aim"){S.charging=true;S.t0=performance.now();rumble(true);} });
 window.addEventListener('pointerup',()=>{ if(S.charging) release(); });
@@ -105,7 +105,7 @@ function outcome(){ const r=S.result; S.shots[S.strike-1]=r;
   if(r==="GOAL"){S.netR=1;S.flash=1;S.shake=16;S.striker="celebrate";S.sound="goal";}
   else {S.shake=12;S.sound=(r==="POST"?"post":(r==="SAVE"?"save":"miss"));}
   S.phase="result"; if(S.sound){play(S.sound);S.sound=null;} }
-function reset(){ S.strike=S.strike>=5?1:S.strike+1; if(S.strike===1)S.shots=[]; S=Object.assign(S,{power:0,phase:"aim",charging:false,ball:null,kx:GCX,kdir:0,result:"",rt:0,striker:"stance",defJump:false,defLift:0,netR:0,kTarget:null}); }
+function reset(){ S.strike=S.strike>=5?1:S.strike+1; if(S.strike===1)S.shots=[]; S=Object.assign(S,{power:0,phase:"aim",charging:false,ball:null,kx:GCX,kdir:0,result:"",rt:0,striker:"stance",defJump:false,defLift:0,netR:0,kTarget:null,smash:null}); }
 
 /* ---------- draw ---------- */
 function spr(name,cx,cy,h){const im=IMG[name];if(!im||!im.width)return;const s=h/im.height,w=im.width*s;ctx.drawImage(im,cx-w/2,cy-h,w,h);}
