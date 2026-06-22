@@ -9,14 +9,14 @@
  canvas{display:block;width:100%;height:100%;background:#06101f;touch-action:none}
  .panel{position:absolute;z-index:6;pointer-events:auto}
  /* CURVE control — right edge */
- #curve{right:2.5%;top:46%;transform:translateY(-50%);width:20vw;max-width:118px;background:rgba(7,16,32,.78);border:1px solid #2c5278;border-radius:16px;padding:10px 6px;text-align:center;backdrop-filter:blur(6px)}
- #curve .lab{font-size:2.6vw;color:#7fd0ff;letter-spacing:.12em}
- #curve .val{font-size:6.4vw;font-weight:800;margin:4px 0;color:#ffd23d}
+ #curve{right:2.5%;top:46%;transform:translateY(-50%);width:13vw;max-width:78px;background:rgba(7,16,32,.78);border:1px solid #2c5278;border-radius:12px;padding:6px 4px;text-align:center;backdrop-filter:blur(6px)}
+ #curve .lab{font-size:2vw;color:#7fd0ff;letter-spacing:.12em}
+ #curve .val{font-size:4.4vw;font-weight:800;margin:4px 0;color:#ffd23d}
  #curve .row{display:flex;gap:6px;justify-content:center}
- #curve button{flex:1;font-size:6vw;font-weight:800;color:#cfe9ff;background:#10243b;border:1px solid #2c5278;border-radius:10px;padding:4px 0}
+ #curve button{flex:1;font-size:4.2vw;font-weight:800;color:#cfe9ff;background:#10243b;border:1px solid #2c5278;border-radius:8px;padding:2px 0}
  /* LEVEL chips — bottom-left */
- #level{left:4%;bottom:10%;display:flex;flex-direction:column;gap:8px}
- #level button{font-size:3.4vw;font-weight:800;letter-spacing:.06em;color:#cfe9ff;background:rgba(7,16,32,.78);border:1px solid #2c5278;border-radius:12px;padding:9px 16px;min-width:24vw}
+ #level{left:3%;bottom:12%;display:flex;flex-direction:column;gap:6px}
+ #level button{font-size:2.7vw;font-weight:800;letter-spacing:.05em;color:#cfe9ff;background:rgba(7,16,32,.78);border:1px solid #2c5278;border-radius:10px;padding:6px 10px;min-width:17vw}
  #level button.on{background:#1f6feb;border-color:#7fd0ff;color:#fff;box-shadow:0 0 16px #1f6feb}
  #shoot{left:50%;bottom:4.5%;transform:translateX(-50%);font-size:3.4vw;font-weight:800;color:#ffe98a;text-shadow:0 2px 8px #000;z-index:6;pointer-events:none;text-align:center}
  #kmode{position:absolute;top:3%;right:3%;z-index:6;font-size:2.8vw;color:#9fc4e6;background:rgba(7,16,32,.7);border:1px solid #2c5278;border-radius:10px;padding:6px 10px}
@@ -37,8 +37,9 @@ const BX0=390,BY0=1340, YWALL=1135, WALLL=300, WALLR=480;
 const KEEPERS=[{n:"AGILE",reach:0.30,spd:1.2,dmg:1.0},{n:"STRONG",reach:0.24,spd:0.95,dmg:0.55},{n:"WALL",reach:0.27,spd:1.05,dmg:0.8}];
 const IMG={}, NEED=["stadium_bg2","keeper_ready","keeper_dive_l","keeper_dive_r","defender_block","striker_stance","striker_kickR","ball_plain"];
 let loaded=0,ready=false; NEED.forEach(n=>{const i=new Image();i.onload=i.onerror=()=>{if(++loaded===NEED.length)ready=true;};i.src=(n==="stadium_bg2"?"sprites/":"sprites_t/")+n+".png";IMG[n]=i;});
-let S={deg:0, level:1, kIdx:0, power:0, phase:"aim", charging:false, t0:0,
+let S={deg:0, level:1, kIdx:0, power:0, phase:"aim", charging:false, t0:0, strike:1, shots:[],
        ball:null, kx:GCX, kdir:0, result:"", rt:0, flash:0, shake:0, defJump:false, netR:0, striker:"stance"};
+const TW=[];for(let i=0;i<26;i++)TW.push({x:Math.random()*W,y:120+Math.random()*640,r:1+Math.random()*2.4,p:Math.random()*6.3});
 
 /* ---------- shot model (physics) ---------- */
 function arrival(deg, level, power){
@@ -100,11 +101,11 @@ function frame(now){ const dt=Math.min(.05,(now-last)/1000); last=now;
     if(b.u>=1){ outcome(); } }
   if(S.phase==="result") S.rt+=dt;
   draw(now/1000); requestAnimationFrame(frame); }
-function outcome(){ const r=S.result;
+function outcome(){ const r=S.result; S.shots[S.strike-1]=r;
   if(r==="GOAL"){S.netR=1;S.flash=1;S.shake=16;S.striker="celebrate";S.sound="goal";}
   else {S.shake=12;S.sound=(r==="POST"?"post":(r==="SAVE"?"save":"miss"));}
   S.phase="result"; if(S.sound){play(S.sound);S.sound=null;} }
-function reset(){ S=Object.assign(S,{power:0,phase:"aim",charging:false,ball:null,kx:GCX,kdir:0,result:"",rt:0,striker:"stance",defJump:false,defLift:0,netR:0,kTarget:null}); }
+function reset(){ S.strike=S.strike>=5?1:S.strike+1; if(S.strike===1)S.shots=[]; S=Object.assign(S,{power:0,phase:"aim",charging:false,ball:null,kx:GCX,kdir:0,result:"",rt:0,striker:"stance",defJump:false,defLift:0,netR:0,kTarget:null}); }
 
 /* ---------- draw ---------- */
 function spr(name,cx,cy,h){const im=IMG[name];if(!im||!im.width)return;const s=h/im.height,w=im.width*s;ctx.drawImage(im,cx-w/2,cy-h,w,h);}
@@ -113,6 +114,7 @@ function draw(t){
   if(!ready){ctx.fillStyle="#06101f";ctx.fillRect(0,0,W,H);ctx.fillStyle="#7fdcff";ctx.textAlign="center";ctx.font="32px sans-serif";ctx.fillText("Loading…",W/2,H/2);return;}
   const sh=S.shake>0?(Math.random()*2-1)*S.shake:0; ctx.save();ctx.translate(sh,sh*0.5);
   const bg=IMG.stadium_bg2; if(bg&&bg.width){const r=Math.max(W/bg.width,H/bg.height),bw=bg.width*r,bh=bg.height*r;ctx.drawImage(bg,(W-bw)/2,(H-bh)/2,bw,bh);}
+  for(const tw of TW){const a=0.2+0.35*Math.sin(t*2.2+tw.p);ctx.save();ctx.globalAlpha=Math.max(0,a);ctx.fillStyle="#dff3ff";ctx.beginPath();ctx.arc(tw.x,tw.y,tw.r,0,7);ctx.fill();ctx.restore();}
   // net ripple (behind-goal correct: ball goes INTO net above the line)
   if(S.netR>0){ctx.save();ctx.globalAlpha=S.netR*0.55;ctx.strokeStyle="#cfeaff";ctx.lineWidth=3;for(let i=0;i<5;i++){const yy=GTY+i*((GY-GTY)/4);ctx.beginPath();ctx.moveTo(GLX,yy);ctx.lineTo(GRX,yy+Math.sin(t*30+i)*5);ctx.stroke();}ctx.restore();}
   // keeper
@@ -133,9 +135,8 @@ function draw(t){
   hud();
 }
 function hud(){
-  ctx.textAlign="left";ctx.fillStyle="#dff3ff";ctx.font="bold 26px sans-serif";
-  const lv=["LOW","MID","HIGH"][S.level];
-  ctx.fillText((S.deg>0?"+":"")+S.deg+"°  ·  "+lv,24,46);
+  ctx.textAlign="left";ctx.fillStyle="#ffe98a";ctx.font="bold 24px sans-serif";ctx.fillText("STRIKE "+S.strike+"/5",24,42);
+  for(let i=0;i<5;i++){const cx=34+i*32,cyy=66;ctx.beginPath();ctx.arc(cx,cyy,12,0,7);const rs=S.shots[i];ctx.fillStyle=rs?(rs==="GOAL"?"#2ec27e":"#d2453a"):((i+1)===S.strike?"#ffd23d":"rgba(255,255,255,.22)");ctx.fill();ctx.strokeStyle="rgba(255,255,255,.45)";ctx.lineWidth=2;ctx.stroke();}
   // power gauge while charging
   if(S.charging){ const x=W*0.14,y=H*0.80,w=W*0.72,h=20; ctx.fillStyle="rgba(6,14,30,.8)";ctx.fillRect(x,y,w,h);
     ctx.fillStyle="#ffd23d";ctx.fillRect(x+3,y+3,(w-6)*S.power,h-6);
